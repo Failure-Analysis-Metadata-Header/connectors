@@ -1,0 +1,19 @@
+{
+    "Customer Specific": {
+      "description": "The customer specific section contains specific meta data defined by a customer.",
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "Infineon": {
+          "description": "The Infineon subsection contains specific metadata defined by the customer Infineon.",
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {}
+        }
+      }
+    }
+  }

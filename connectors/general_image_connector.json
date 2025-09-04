@@ -1,0 +1,143 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "General Image TIFF Connector",
+  "description": "Universal connector for basic image metadata from TIFF files",
+  "version": "1.0",
+  "type": "object",
+  "tool_identification": {
+    "description": "Generic TIFF image connector for basic metadata fields",
+    "applies_to": "all_tiff_files"
+  },
+  "mappings": {
+    "general_section": {
+      "File Name": {
+        "source": ["filename", "DocumentName"],
+        "extraction": "file_metadata",
+        "description": "Extract from file path or DocumentName tag",
+        "required": true
+      },
+      "File Size": {
+        "source": "file_size",
+        "extraction": "file_metadata",
+        "unit": "bytes",
+        "description": "File size from filesystem",
+        "required": true
+      },
+      "File Format": {
+        "source": "format",
+        "extraction": "pillow.basic_info.format",
+        "expected_value": "TIFF",
+        "description": "File format identifier",
+        "required": true
+      },
+      "Image Width": {
+        "source": ["pillow.width", "pillow.tags_v2.ImageWidth", "tifffile.pages[0].shape[1]", "exifread.Image ImageWidth"],
+        "extraction": "first_available_numeric",
+        "unit": "pixels",
+        "description": "Image width in pixels",
+        "required": true
+      },
+      "Image Height": {
+        "source": ["pillow.height", "pillow.tags_v2.ImageLength", "tifffile.pages[0].shape[0]", "exifread.Image ImageLength"],
+        "extraction": "first_available_numeric",
+        "unit": "pixels", 
+        "description": "Image height in pixels",
+        "required": true
+      },
+      "Bit Depth": {
+        "source": ["pillow.tags_v2.BitsPerSample", "tifffile.pages[0].dtype", "exifread.Image BitsPerSample"],
+        "extraction": "first_available_numeric",
+        "description": "Bits per sample/pixel",
+        "required": true
+      },
+      "Pixel Width": {
+        "source": ["pillow.tags_v2.XResolution"],
+        "extraction": "resolution_to_pixel_size",
+        "unit": "nm",
+        "transformation": "dpi_to_nanometers",
+        "description": "Physical width of each pixel"
+      },
+      "Pixel Height": {
+        "source": ["pillow.tags_v2.YResolution"],
+        "extraction": "resolution_to_pixel_size",
+        "unit": "nm",
+        "transformation": "dpi_to_nanometers",
+        "description": "Physical height of each pixel"
+      },
+      "Color Mode": {
+        "source": ["pillow.basic_info.mode", "pillow.tags_v2.PhotometricInterpretation"],
+        "extraction": "map_color_mode",
+        "transformation": "standardize_color_mode",
+        "description": "Image color mode (grayscale, RGB, etc.)"
+      },
+      "Manufacturer": {
+        "source": ["pillow.tags_v2.Make", "exifread.Image Make"],
+        "extraction": "first_available_string",
+        "transformation": "clean_string",
+        "description": "Equipment manufacturer"
+      },
+      "Tool Name": {
+        "source": ["pillow.tags_v2.Model", "exifread.Image Model"],
+        "extraction": "first_available_string",
+        "transformation": "clean_string",
+        "description": "Equipment model/name"
+      },
+      "Software": {
+        "source": ["exifread.Image Software", "pillow.tags_v2.Software"],
+        "extraction": "first_available_string",
+        "transformation": "clean_string",
+        "description": "Software used to create image"
+      },
+      "Time Stamp": {
+        "source": ["pillow.tags_v2.DateTime", "exifread.Image DateTime"],
+        "extraction": "first_available_string",
+        "transformation": "convert_to_iso8601",
+        "description": "Image creation timestamp"
+      }
+    }
+  },
+  "transformations": {
+    "clean_string": {
+      "description": "Remove null bytes and control characters",
+      "implementation": "strip_nulls_and_control_chars"
+    },
+    "first_available_numeric": {
+      "description": "Extract first available numeric value",
+      "implementation": "parse_first_number"
+    },
+    "first_available_string": {
+      "description": "Extract first available clean string",
+      "implementation": "get_first_valid_string"
+    },
+    "convert_to_iso8601": {
+      "description": "Convert timestamp to ISO8601 format",
+      "implementation": "datetime_to_iso8601"
+    },
+    "dpi_to_nanometers": {
+      "description": "Convert DPI resolution to pixel size in nanometers",
+      "implementation": "resolution_to_pixel_size"
+    },
+    "standardize_color_mode": {
+      "description": "Map various color mode representations to standard terms",
+      "implementation": "normalize_color_mode"
+    }
+  },
+  "validation": {
+    "required_fields": [
+      "general_section.File Name",
+      "general_section.File Size", 
+      "general_section.File Format",
+      "general_section.Image Width",
+      "general_section.Image Height",
+      "general_section.Bit Depth"
+    ],
+    "optional_fields": [
+      "general_section.Manufacturer",
+      "general_section.Tool Name",
+      "general_section.Software",
+      "general_section.Time Stamp",
+      "general_section.Pixel Width",
+      "general_section.Pixel Height"
+    ]
+  }
+}
