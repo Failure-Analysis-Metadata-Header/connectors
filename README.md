@@ -3,11 +3,14 @@ This repository contains FA Header connector files, which are essentially dictio
 
 The idea is to create these connector files for data from different manufacturers in order to simplify the creation of metadata in the standardized FA Header format.
 
-# FA 4.0 Header Generation System - Implementation Summary
+# FA eader Generation System - Implementation Summary
 
 ## Overview
 
-I've successfully created a complete system for extracting metadata from TIFF files and generating standardized FA 4.0 JSON headers using configurable connector mappings.
+Apart from connectors, this repository contains tools that help with generating a JSON file from a TIFF file using a connector as well as tools for extracting metadata and creating connectors.
+This is the first draft of the project and it needs refinement.
+
+Also note that the below documentation was written by AI and is therefore subject to errors.
 
 ## Components Created
 
@@ -42,60 +45,6 @@ header = generator.generate_fa40_header("image.tif", "output.json")
 validation = generator.validate_header(header)
 ```
 
-### 3. Demonstration Workflow
-**File**: `demo_fa40_workflow.py`
-
-Complete demonstration showing:
-- Single file processing
-- Multi-file comparison
-- Validation reporting
-- Key insights extraction
-
-## Test Results
-
-Successfully tested with your TIFF files:
-
-### File 1: `003_Ref_20x_WatchdogRunning.tif`
-- **Dimensions**: 1000×1000 pixels, 8-bit
-- **Pixel size**: 866×874 nm
-- **Field of view**: 866×874 μm  
-- **Software**: SemiShop (with binary artifacts)
-- **All required fields**: ✅ Successfully mapped
-
-### File 2: `Fail_1 Loop_20X_Overlay_11.tiff`
-- **Dimensions**: 640×640 pixels, 8-bit
-- **Color mode**: RGB vs. Palette (different from file 1)
-- **Software detection**: Limited metadata available
-
-## Generated FA 4.0 Structure
-
-```json
-{
-  "General Section": {
-    "File Name": "003_Ref_20x_WatchdogRunning.tif",
-    "File Size": {"Value": 1003582, "Unit": "bytes"},
-    "File Format": "TIFF", 
-    "Image Width": {"Value": 1000, "Unit": "pixels"},
-    "Image Height": {"Value": 1000, "Unit": "pixels"},
-    "Bit Depth": 8,
-    "Pixel Width": {"Value": 866.0, "Unit": "nm"},
-    "Pixel Height": {"Value": 874.0, "Unit": "nm"},
-    "Color Mode": "palette",
-    "Manufacturer": "HPK_SYSTEME",
-    "Tool Name": "SemiShop", 
-    "Software": "SemiShop",
-    "Time Stamp": "2025-09-04T11:20:04.523650",
-    "Header Type": "FA4.0 standardized header",
-    "Version": "v1.0"
-  },
-  "Method Specific": {},
-  "Tool Specific": {},
-  "Customer Specific": {},
-  "Data Evaluation": {},
-  "History": {}
-}
-```
-
 ## Key Features Implemented
 
 ### ✅ Robust Metadata Extraction
@@ -127,24 +76,24 @@ Successfully tested with your TIFF files:
 ### Basic Usage
 ```bash
 # Generate FA 4.0 header from TIFF
-python fa40_header_generator.py image.tif connector.json
+python fa_header_generator.py image.tif connector.json
 
 # With validation and preview
-python fa40_header_generator.py image.tif connector.json --validate --pretty-print
+python fa_header_generator.py image.tif connector.json --validate --pretty-print
 
 # Custom output location
-python fa40_header_generator.py image.tif connector.json -o custom_header.json
+python fa_header_generator.py image.tif connector.json -o custom_header.json
 ```
 
 ### Programmatic Usage
 ```python
-from fa40_header_generator import FA40HeaderGenerator
+from fa_header_generator import FAHeaderGenerator
 
 # Initialize
-generator = FA40HeaderGenerator("connector.json")
+generator = FAHeaderGenerator("connector.json")
 
 # Process file
-header = generator.generate_fa40_header("image.tif")
+header = generator.generate_fa_header("image.tif")
 
 # Validate
 validation = generator.validate_header(header)
