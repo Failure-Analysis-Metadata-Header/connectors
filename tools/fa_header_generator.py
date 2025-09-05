@@ -12,32 +12,16 @@ from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
 import argparse
 
-# Check for optional dependencies
-try:
-    from PIL import Image
-    from PIL.ExifTags import TAGS
+from PIL import Image
+from PIL.ExifTags import TAGS
 
-    PIL_AVAILABLE = True
-except ImportError:
-    PIL_AVAILABLE = False
+import tifffile
 
-try:
-    import tifffile
-
-    TIFFFILE_AVAILABLE = True
-except ImportError:
-    TIFFFILE_AVAILABLE = False
-
-try:
-    import exifread
-
-    EXIFREAD_AVAILABLE = True
-except ImportError:
-    EXIFREAD_AVAILABLE = False
+import exifread
 
 
-class SimpleTIFFMetadataExtractor:
-    """Simplified TIFF metadata extractor for FA 4.0 header generation"""
+class MetadataExtractor:
+    """Simplified TIFF metadata extractor for FA header generation"""
 
     def extract_file_metadata(self, file_path: str) -> Dict[str, Any]:
         """Extract metadata from a TIFF file"""
@@ -65,8 +49,6 @@ class SimpleTIFFMetadataExtractor:
 
     def _extract_with_pillow(self, file_path: str) -> Dict[str, Any]:
         """Extract metadata using Pillow (PIL)"""
-        if not PIL_AVAILABLE:
-            return {}
 
         metadata = {}
         try:
@@ -94,8 +76,6 @@ class SimpleTIFFMetadataExtractor:
 
     def _extract_with_tifffile(self, file_path: str) -> Dict[str, Any]:
         """Extract metadata using tifffile library"""
-        if not TIFFFILE_AVAILABLE:
-            return {}
 
         metadata = {}
         try:
@@ -129,8 +109,6 @@ class SimpleTIFFMetadataExtractor:
 
     def _extract_with_exifread(self, file_path: str) -> Dict[str, Any]:
         """Extract metadata using exifread library"""
-        if not EXIFREAD_AVAILABLE:
-            return {}
 
         metadata = {}
         try:
@@ -147,13 +125,13 @@ class SimpleTIFFMetadataExtractor:
         return metadata
 
 
-class FA40HeaderGenerator:
-    """Generate FA 4.0 standardized headers from TIFF files using connector mappings"""
+class FAHeaderGenerator:
+    """Generate FA standardized headers from TIFF files using connector mappings"""
 
     def __init__(self, connector_file: str):
         """Initialize with a connector file"""
         self.connector = self.load_connector(connector_file)
-        self.metadata_extractor = SimpleTIFFMetadataExtractor()
+        self.metadata_extractor = MetadataExtractor()
 
     def load_connector(self, connector_file: str) -> Dict[str, Any]:
         """Load connector mapping configuration"""
@@ -344,17 +322,17 @@ class FA40HeaderGenerator:
 
         return None
 
-    def generate_fa40_header(
+    def generate_fa_header(
         self, tiff_file: str, output_file: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Generate FA 4.0 header from TIFF file using connector"""
+        """Generate FA header from TIFF file using connector"""
 
         # Extract metadata from TIFF
         print(f"Extracting metadata from: {Path(tiff_file).name}")
         metadata = self.extract_tiff_metadata(tiff_file)
 
-        # Initialize FA 4.0 header structure
-        fa40_header = {
+        # Initialize FA header structure
+        fa_header = {
             "General Section": {},
             "Method Specific": {},
             "Tool Specific": {},
@@ -388,29 +366,29 @@ class FA40HeaderGenerator:
                             "Pixel Width",
                             "Pixel Height",
                         ]:
-                            fa40_header[target_section][field_name] = {
+                            fa_header[target_section][field_name] = {
                                 "Value": value,
                                 "Unit": unit,
                             }
                         else:
-                            fa40_header[target_section][field_name] = value
+                            fa_header[target_section][field_name] = value
 
         # Add header metadata
-        fa40_header["General Section"]["Header Type"] = "FA4.0 standardized header"
-        fa40_header["General Section"]["Version"] = "v1.0"
-        fa40_header["General Section"]["Time Stamp"] = datetime.now().isoformat()
+        fa_header["General Section"]["Header Type"] = "FA standardized header"
+        fa_header["General Section"]["Version"] = "v1.0"
+        fa_header["General Section"]["Time Stamp"] = datetime.now().isoformat()
 
         # Add file path if not already present
-        if "File Path" not in fa40_header["General Section"]:
-            fa40_header["General Section"]["File Path"] = str(Path(tiff_file).parent)
+        if "File Path" not in fa_header["General Section"]:
+            fa_header["General Section"]["File Path"] = str(Path(tiff_file).parent)
 
         # Save to file if specified
         if output_file:
             with open(output_file, "w", encoding="utf-8") as f:
-                json.dump(fa40_header, f, indent=2, ensure_ascii=False)
-            print(f"FA 4.0 header saved to: {output_file}")
+                json.dump(fa_header, f, indent=2, ensure_ascii=False)
+            print(f"FA header saved to: {output_file}")
 
-        return fa40_header
+        return fa_header
 
     def validate_header(self, header: Dict[str, Any]) -> Dict[str, List[str]]:
         """Validate generated header against connector requirements"""
@@ -491,7 +469,7 @@ def main():
     parser.add_argument(
         "-o",
         "--output",
-        help="Output JSON file (default: <tiff_name>_fa40_header.json)",
+        help="Output JSON file (default: <tiff_name>_fa_header.json)",
     )
     parser.add_argument(
         "--validate",
@@ -512,12 +490,12 @@ def main():
         output_file = tiff_path.stem + "_fa40_header.json"
 
     # Generate header
-    generator = FA40HeaderGenerator(args.connector_file)
-    header = generator.generate_fa40_header(args.tiff_file, output_file)
+    generator = FAHeaderGenerator(args.connector_file)
+    header = generator.generate_fa_header(args.tiff_file, output_file)
 
     # Pretty print if requested
     if args.pretty_print:
-        print("\nGenerated FA 4.0 Header:")
+        print("\nGenerated FA Header:")
         print(json.dumps(header, indent=2, ensure_ascii=False))
 
     # Validate if requested
